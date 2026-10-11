@@ -84,6 +84,29 @@ class ChatApiTests(unittest.TestCase):
         self.assertIn("Gemini denied access", response.json()["detail"])
         self.assertNotIn("forbidden", response.json()["detail"])
 
+    def test_provider_unavailable_error_suggests_retry(self):
+        from google.genai.errors import APIError
+
+        generate_content = AsyncMock(
+            side_effect=APIError(
+                503,
+                {"error": {"status": "UNAVAILABLE", "message": "busy"}},
+            )
+        )
+        fake_client = SimpleNamespace(
+            aio=SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+        )
+
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            with patch("main.genai.Client", return_value=fake_client):
+                response = self.client.post(
+                    "/chat", json={"message": "Explain solar energy"}
+                )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("temporarily busy", response.json()["detail"])
+        self.assertNotIn("busy", response.json()["detail"].lower().replace("temporarily busy", ""))
+
     def test_personal_information_is_redacted_before_provider_call(self):
         generate_content = AsyncMock(
             return_value=SimpleNamespace(text="Solar panels convert sunlight.")

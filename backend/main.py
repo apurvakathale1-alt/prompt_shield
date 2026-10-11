@@ -29,7 +29,7 @@ ALLOWED_ORIGINS = [
     for origin in os.getenv("ALLOWED_ORIGINS", ",".join(DEFAULT_ORIGINS)).split(",")
     if origin.strip()
 ]
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
 
 app = FastAPI(title="PromptShield API", version="1.0.0")
 app.add_middleware(
@@ -63,6 +63,7 @@ def health():
     return {
         "status": "PromptShield Backend Running",
         "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
+        "model": MODEL_NAME,
     }
 
 
@@ -113,6 +114,8 @@ async def chat(request: ChatRequest):
             )
         elif provider_code == 429 or provider_status == "RESOURCE_EXHAUSTED":
             detail = "Gemini quota or rate limit reached. Check the project's quota and billing."
+        elif provider_code == 503 or provider_status == "UNAVAILABLE":
+            detail = "Gemini is temporarily busy. Please try again in a few seconds."
         elif provider_code == 400:
             detail = (
                 "Gemini rejected the request. Check the configured model and API key "

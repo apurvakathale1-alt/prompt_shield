@@ -52,7 +52,7 @@ notepad .env
 ```
 
 In `.env`, replace the `GEMINI_API_KEY` example value with the key from Google
-AI Studio, keep `GEMINI_MODEL=gemini-3.8-flash`, save the file, and keep the
+AI Studio, keep `GEMINI_MODEL=gemini-3.5-flash`, save the file, and keep the
 backend terminal running. Then open
 `http://localhost:8000/health`; `gemini_configured` should be `true`. The
 `.env` file is ignored by Git. If the frontend is running on `localhost:5175`,
