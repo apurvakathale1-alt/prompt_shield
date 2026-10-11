@@ -16,7 +16,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run backend tests
+        run: python -m unittest discover -s backend -p 'test_*.py'
+
   build:
+    needs: test-backend
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -40,6 +60,8 @@ jobs:
 
       - name: Build app
         working-directory: frontend
+        env:
+          VITE_CHAT_API_URL: ${{ vars.VITE_CHAT_API_URL || 'https://promptshield-api.onrender.com' }}
         run: npm run build
 
       - name: Upload Pages artifact

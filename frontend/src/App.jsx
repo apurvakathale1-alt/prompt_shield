@@ -3,6 +3,7 @@ import "./App.css";
 import DatasetExplorer from "./components/DatasetExplorer";
 
 const PDFUploader = lazy(() => import("./components/PDFUploader"));
+const Chatbot = lazy(() => import("./components/Chatbot"));
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -21,6 +22,7 @@ function App() {
 
   const menuItems = [
     "Dashboard",
+    "AI Chat",
     "Testing Lab",
     "Dataset Explorer",
     "PDF Upload",
@@ -332,6 +334,8 @@ function App() {
                   ? "▤"
                   : item === "PDF Upload"
                   ? "📄"
+                  : item === "AI Chat"
+                  ? "💬"
                   : item === "Policy Simulator"
                   ? "⛨"
                   : item === "Attack Replay"
@@ -349,8 +353,8 @@ function App() {
         <div className="sidebar-bottom">
           <div className="status-indicator" />
           <div>
-            <strong>Local Demo Mode</strong>
-            <span>No external AI API connected</span>
+            <strong>Protected Demo Mode</strong>
+            <span>Chat screens through PromptShield API</span>
           </div>
         </div>
       </aside>
@@ -621,9 +625,16 @@ function App() {
           </Suspense>
         )}
 
+        {activePage === "AI Chat" && (
+          <Suspense fallback={<div className="panel">Loading AI chat...</div>}>
+            <Chatbot />
+          </Suspense>
+        )}
+
         {activePage !== "Dashboard" &&
           activePage !== "Dataset Explorer" &&
-          activePage !== "PDF Upload" && (
+          activePage !== "PDF Upload" &&
+          activePage !== "AI Chat" && (
           <section className="panel page-placeholder">
             <div className="placeholder-icon">◈</div>
             <h2>{activePage}</h2>
@@ -633,7 +644,7 @@ function App() {
 
         <footer className="footer">
           <span>PromptShield · AI Prompt Injection Defense</span>
-          <span>Prototype v0.1 · Local Development</span>
+          <span>Prototype v0.2 · GitHub Pages + Render API</span>
         </footer>
       </main>
     </div>
