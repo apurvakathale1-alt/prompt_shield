@@ -1,8 +1,8 @@
 import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 
-// PDF.js worker setup
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// ⬇️ Worker setup — jsdelivr CDN (reliable)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 function PDFUploader({ onAnalyze }) {
   const [file, setFile] = useState(null);
@@ -29,7 +29,11 @@ function PDFUploader({ onAnalyze }) {
 
     try {
       const arrayBuffer = await selectedFile.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+      }).promise;
 
       let fullText = "";
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -41,12 +45,10 @@ function PDFUploader({ onAnalyze }) {
 
       setExtractedText(fullText);
 
-      // Analyze करा
       const result = analyzePDF(fullText);
       setCleanText(result.clean);
       setRemoved(result.removed);
 
-      // Dashboard stats update
       if (onAnalyze) {
         onAnalyze(fullText, "document");
       }
@@ -58,70 +60,151 @@ function PDFUploader({ onAnalyze }) {
   };
 
   const analyzePDF = (text) => {
-    let clean = text;
-    const removedItems = [];
+    const matches = [];
 
-    // 1. Emails
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-    clean = clean.replace(emailRegex, (match) => {
-      removedItems.push({ type: "Email", value: match });
-      return "[EMAIL_REDACTED]";
-    });
+    const getContext = (start, end) => {
+      const contextStart = Math.max(0, start - 40);
+      const contextEnd = Math.min(text.length, end + 40);
+      const context = text.slice(contextStart, contextEnd);
+      return (contextStart > 0 ? "..." : "") +
+        context +
+        (contextEnd < text.length ? "..." : "");
+    };
 
-    // 2. Phone
-    const phoneRegex = /(\+91[\s-]?)?[6-9]\d{9}\b/g;
-    clean = clean.replace(phoneRegex, (match) => {
-      removedItems.push({ type: "Phone", value: match });
-      return "[PHONE_REDACTED]";
-    });
+    const collectMatches = (pattern, type, reason, replacement) => {
+      pattern.lastIndex = 0;
+      let match;
 
-    // 3. API keys
-    const apiKeyRegex = /\b(sk|pk|api)[-_][a-zA-Z0-9]{16,}\b/gi;
-    clean = clean.replace(apiKeyRegex, (match) => {
-      removedItems.push({ type: "API Key", value: match });
-      return "[API_KEY_REDACTED]";
-    });
+      while ((match = pattern.exec(text)) !== null) {
+        const start = match.index;
+        const end = start + match[0].length;
+        const overlaps = matches.some(
+          (existing) => start < existing.end && existing.start < end,
+        );
 
-    // 4. Aadhaar
-    const aadhaarRegex = /\b\d{4}\s?\d{4}\s?\d{4}\b/g;
-    clean = clean.replace(aadhaarRegex, (match) => {
-      removedItems.push({ type: "Aadhaar", value: match });
-      return "[AADHAAR_REDACTED]";
-    });
+        if (!overlaps) {
+          matches.push({
+            start,
+            end,
+            replacement,
+            item: {
+              type,
+              value: match[0].trim(),
+              reason,
+              context: getContext(start, end),
+            },
+          });
+        }
 
-    // 5. PAN
-    const panRegex = /\b[A-Z]{5}\d{4}[A-Z]\b/g;
-    clean = clean.replace(panRegex, (match) => {
-      removedItems.push({ type: "PAN", value: match });
-      return "[PAN_REDACTED]";
-    });
-
-    // 6. Injection commands
-    const injectionPatterns = [
-      /system\s+override[^.]*/gi,
-      /ignore\s+(all\s+)?(previous\s+)?instructions[^.]*/gi,
-      /send\s+.*(to\s+)?(attacker|evil|hacker)@[^\s]+/gi,
-      /execute\s+command[^.]*/gi,
-      /curl\s+https?:\/\/[^\s]+/gi,
-    ];
-    injectionPatterns.forEach((pattern) => {
-      const matches = clean.match(pattern);
-      if (matches) {
-        matches.forEach((m) => {
-          removedItems.push({ type: "Injection", value: m.trim() });
-        });
-        clean = clean.replace(pattern, "[INJECTION_REMOVED]");
+        if (match[0].length === 0) pattern.lastIndex += 1;
       }
+    };
+
+    collectMatches(
+      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+      "Email",
+      "Personal email address — privacy risk",
+      "[EMAIL_REDACTED]",
+    );
+    collectMatches(
+      /\b(sk|pk|api)[-_][a-zA-Z0-9]{16,}\b/gi,
+      "API Key",
+      "Secret API key — चोरीला जाऊ शकते",
+      "[API_KEY_REDACTED]",
+    );
+    collectMatches(
+      /\b\d{4}\s?\d{4}\s?\d{4}\b/g,
+      "Aadhaar",
+      "Government ID number — sensitive",
+      "[AADHAAR_REDACTED]",
+    );
+    collectMatches(
+      /(\+91[\s-]?)?[6-9]\d{9}\b/g,
+      "Phone",
+      "Personal phone number — privacy risk",
+      "[PHONE_REDACTED]",
+    );
+    collectMatches(
+      /\b[A-Z]{5}\d{4}[A-Z]\b/g,
+      "PAN",
+      "Tax ID — sensitive",
+      "[PAN_REDACTED]",
+    );
+
+    const injectionChecks = [
+      {
+        pattern: /ignore\s+all\s+prior\s+rules/gi,
+        type: "Instruction Override",
+        reason:
+          "AI ला फसवण्याचा प्रयत्न — 'ignore all prior rules' म्हणजे AI ने नियम विसरावेत",
+      },
+      {
+        pattern: /system\s+override[^.]*/gi,
+        type: "System Override",
+        reason: "AI च्या system instructions बदलण्याचा प्रयत्न",
+      },
+      {
+        pattern: /ignore\s+(all\s+)?(previous\s+)?instructions[^.]*/gi,
+        type: "Instruction Override",
+        reason: "AI ने आधीच्या सूचना विसराव्यात अशी फसवणूक",
+      },
+      {
+        pattern: /print\s+secret\s+keys?/gi,
+        type: "Data Leak",
+        reason: "गुप्त keys उघड करण्याचा प्रयत्न",
+      },
+      {
+        pattern: /send\s+.*(to\s+)?(attacker|evil|hacker)@[^\s]+/gi,
+        type: "Data Exfiltration",
+        reason: "Data चोरून बाहेर पाठवण्याचा प्रयत्न",
+      },
+      {
+        pattern: /execute\s+command[^.]*/gi,
+        type: "Command Injection",
+        reason: "System वर command चालवण्याचा प्रयत्न",
+      },
+      {
+        pattern: /curl\s+https?:\/\/[^\s]+/gi,
+        type: "Malicious Command",
+        reason: "External server ला data पाठवण्याचा प्रयत्न",
+      },
+      {
+        pattern: /draft\s+a\s+polite\s+sick\s+leave\s+email[^.]*/gi,
+        type: "Hidden Command",
+        reason: "दुसऱ्या कामासाठी AI ला भाग पाडणे",
+      },
+      {
+        pattern: /NOTE\s+TO\s+AGENT[^.]*/gi,
+        type: "Indirect Injection",
+        reason: "Untrusted document मधून AI ला सूचना देण्याचा प्रयत्न",
+      },
+    ];
+
+    injectionChecks.forEach(({ pattern, type, reason }) => {
+      collectMatches(pattern, type, reason, "[INJECTION_REMOVED]");
     });
 
-    // 7. Malicious URLs
-    const urlRegex = /(https?:\/\/[^\s]*?(evil|attacker|hacker|malicious)[^\s]*)/gi;
-    clean = clean.replace(urlRegex, (match) => {
-      removedItems.push({ type: "Malicious URL", value: match });
-      return "[URL_REMOVED]";
-    });
+    collectMatches(
+      /(https?:\/\/[^\s]*?(evil|attacker|hacker|malicious)[^\s]*)/gi,
+      "Malicious URL",
+      "संशयास्पद URL — data leak होऊ शकतो",
+      "[URL_REMOVED]",
+    );
 
-    return { clean: clean.trim(), removed: removedItems };
+    const clean = [...matches]
+      .sort((a, b) => b.start - a.start)
+      .reduce(
+        (current, match) =>
+          current.slice(0, match.start) +
+          match.replacement +
+          current.slice(match.end),
+        text,
+      );
+
+    return {
+      clean: clean.trim(),
+      removed: matches.map(({ item }) => item),
+    };
   };
 
   const downloadClean = () => {
@@ -156,9 +239,7 @@ function PDFUploader({ onAnalyze }) {
       </div>
 
       {loading && (
-        <div className="pdf-loading">
-          ⏳ Extracting and analyzing...
-        </div>
+        <div className="pdf-loading">⏳ Extracting and analyzing...</div>
       )}
 
       {error && <div className="pdf-error">❌ {error}</div>}
@@ -171,9 +252,24 @@ function PDFUploader({ onAnalyze }) {
           </p>
           <div className="removed-list">
             {removed.map((item, i) => (
-              <div key={i} className="removed-item">
-                <span className="removed-type">{item.type}</span>
-                <code>{item.value}</code>
+              <div key={`${item.type}-${i}`} className="removed-detail">
+                <div className="removed-header">
+                  <span className="removed-type">{item.type}</span>
+                </div>
+                <div className="removed-text">
+                  <span className="label">❌ काढलेला text:</span>
+                  <code className="exact-text">"{item.value}"</code>
+                </div>
+                <div className="removed-reason">
+                  <span className="label">📌 कारण:</span>
+                  <span className="reason-text">{item.reason}</span>
+                </div>
+                {item.context && (
+                  <div className="removed-context">
+                    <span className="label">🔍 Context:</span>
+                    <code className="context-text">{item.context}</code>
+                  </div>
+                )}
               </div>
             ))}
           </div>

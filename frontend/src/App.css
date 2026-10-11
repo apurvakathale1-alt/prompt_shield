@@ -1044,3 +1044,67 @@ textarea::placeholder {
   overflow-y: auto;
   line-height: 1.5;
 }
+
+/* Removed Detail Card */
+.removed-detail {
+  background: #0a0a12;
+  border-radius: 8px;
+  padding: 0.85rem;
+  margin-bottom: 0.65rem;
+  border-left: 3px solid #ef4444;
+}
+
+.removed-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.removed-text,
+.removed-reason,
+.removed-context {
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.7rem;
+  color: #8a8a9a;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.exact-text {
+  background: #1a1010;
+  color: #ef4444;
+  padding: 0.5rem 0.7rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  word-break: break-word;
+  border-left: 2px solid #ef4444;
+}
+
+.reason-text {
+  color: #f59e0b;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  background: #2a1a10;
+  border-radius: 4px;
+}
+
+.context-text {
+  background: #0f0f18;
+  color: #8a8a9a;
+  padding: 0.5rem 0.7rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  word-break: break-word;
+  display: block;
+  line-height: 1.4;
+  font-style: italic;
+}
