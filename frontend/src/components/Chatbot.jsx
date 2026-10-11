@@ -50,7 +50,10 @@ function Chatbot() {
         ...previous,
         {
           role: "ai",
-          text: error.message || "Could not reach the PromptShield chat service.",
+          text:
+            error instanceof TypeError
+              ? `Cannot reach the chat backend at ${API_BASE_URL}. Start the backend on port 8000, or check the deployed Render service URL and status.`
+              : error.message || "Could not reach the PromptShield chat service.",
           error: true,
         },
       ]);

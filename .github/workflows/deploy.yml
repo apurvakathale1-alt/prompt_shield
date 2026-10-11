@@ -33,7 +33,8 @@ jobs:
         run: pip install -r backend/requirements.txt
 
       - name: Run backend tests
-        run: python -m unittest discover -s backend -p 'test_*.py'
+        working-directory: backend
+        run: python -m unittest test_api test_security
 
   build:
     needs: test-backend

@@ -20,20 +20,26 @@ class ChatApiTests(unittest.TestCase):
         self.assertFalse(response.json()["gemini_configured"])
 
     def test_local_vite_origin_is_allowed_by_cors(self):
-        response = self.client.options(
-            "/chat",
-            headers={
-                "Origin": "http://127.0.0.1:5173",
-                "Access-Control-Request-Method": "POST",
-                "Access-Control-Request-Headers": "content-type",
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.headers["access-control-allow-origin"],
+        for origin in (
             "http://127.0.0.1:5173",
-        )
+            "http://localhost:5175",
+            "http://127.0.0.1:5175",
+        ):
+            with self.subTest(origin=origin):
+                response = self.client.options(
+                    "/chat",
+                    headers={
+                        "Origin": origin,
+                        "Access-Control-Request-Method": "POST",
+                        "Access-Control-Request-Headers": "content-type",
+                    },
+                )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(
+                    response.headers["access-control-allow-origin"],
+                    origin,
+                )
 
     def test_injection_is_blocked_without_calling_provider(self):
         with patch.dict(os.environ, {}, clear=True):

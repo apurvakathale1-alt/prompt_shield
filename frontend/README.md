@@ -35,5 +35,24 @@ The Pages build uses `https://promptshield-api.onrender.com` by default. If
 Render assigns a different URL, set the GitHub Actions repository variable
 `VITE_CHAT_API_URL` to that backend URL and redeploy the Pages workflow. The
 backend allows the published GitHub Pages origin and local Vite development
-origins by default. On Render's free plan, the service may take a short time to
-wake after inactivity.
+origins on ports 5173, 4173, and 5175 by default. On Render's free plan, the
+service may take a short time to wake after inactivity.
+
+### Run the backend locally on Windows
+
+From PowerShell, run:
+
+```powershell
+Set-Location C:\Users\Apurva\Desktop\PromptShield\backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+notepad .env
+.\.venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000
+```
+
+In `.env`, replace the `GEMINI_API_KEY` example value with the key from Google
+AI Studio, save the file, and keep the backend terminal running. Then open
+`http://localhost:8000/health`; `gemini_configured` should be `true`. The
+`.env` file is ignored by Git. If the frontend is running on `localhost:5175`,
+that origin is already included in the local and Render CORS configuration.
