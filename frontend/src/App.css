@@ -895,3 +895,152 @@ textarea::placeholder {
     gap: 1rem;
   }
 }
+
+/* PDF Uploader */
+.pdf-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pdf-header h3 {
+  color: #fff;
+  margin-bottom: 0.35rem;
+}
+
+.pdf-header p {
+  color: #6a6a7a;
+  font-size: 0.85rem;
+}
+
+.pdf-upload-box {
+  padding: 2rem;
+  border: 2px dashed #2a2a3a;
+  border-radius: 12px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.pdf-upload-box:hover {
+  border-color: #7c3aed;
+}
+
+.pdf-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.5rem;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: transform 0.2s;
+}
+
+.pdf-upload-label:hover {
+  transform: translateY(-2px);
+}
+
+.upload-icon {
+  font-size: 1.1rem;
+}
+
+.pdf-loading {
+  padding: 1rem;
+  background: #1a1a25;
+  border-radius: 8px;
+  text-align: center;
+  color: #a0a0b0;
+}
+
+.pdf-error {
+  padding: 1rem;
+  background: #2a1010;
+  border-left: 3px solid #ef4444;
+  border-radius: 8px;
+  color: #ef4444;
+}
+
+.pdf-report {
+  padding: 1.25rem;
+  background: #3a2a10;
+  border-left: 3px solid #f59e0b;
+  border-radius: 12px;
+}
+
+.pdf-report h4 {
+  color: #f59e0b;
+  margin-bottom: 0.5rem;
+}
+
+.pdf-report > p {
+  color: #c0c0d0;
+  margin-bottom: 0.75rem;
+}
+
+.removed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.removed-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: #0a0a12;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.removed-type {
+  background: #ef4444;
+  color: #fff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.removed-item code {
+  color: #c0c0d0;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+  font-size: 0.75rem;
+}
+
+.pdf-output {
+  padding: 1.25rem;
+  background: #0a2a1a;
+  border-left: 3px solid #10b981;
+  border-radius: 12px;
+}
+
+.output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.output-header h4 {
+  color: #10b981;
+}
+
+.clean-text {
+  padding: 1rem;
+  background: #0a0a12;
+  border-radius: 8px;
+  color: #c0c0d0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
