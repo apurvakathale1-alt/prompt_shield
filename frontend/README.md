@@ -44,6 +44,18 @@ extract to at most 40,000 characters. Scanned/image-only PDFs are not supported.
 The extracted text is screened for prompt injection and personal information
 is redacted by the backend before any content is sent to Gemini.
 
+Use **Image Cleaner** to check a JPEG, PNG, or WebP image for clearly
+digitally-inserted prompt-like text or obviously unrelated composited objects.
+The backend sends the image to Gemini for detection; detected additions are
+sent to the configured Gemini image model for removal. Uploads are limited to
+5 MB and 20 megapixels. The tool preserves ordinary scene contents and
+attribution such as logos and watermarks; AI results can be wrong, and invisible
+steganographic payloads are not reliably detectable. Generative edits may also
+change nearby details. Images are sent to the configured Gemini service, so do
+not upload private images without permission.
+Set `GEMINI_IMAGE_MODEL` on the backend if a different supported image-editing
+model is needed.
+
 ### Run the backend locally on Windows
 
 From PowerShell, run:
@@ -63,3 +75,5 @@ backend terminal running. Then open
 `http://localhost:8000/health`; `gemini_configured` should be `true`. The
 `.env` file is ignored by Git. If the frontend is running on `localhost:5175`,
 that origin is already included in the local and Render CORS configuration.
+For Image Cleaner, the backend also needs a Gemini image-editing model enabled
+for the key; `.env.example` uses `GEMINI_IMAGE_MODEL=gemini-2.5-flash-image`.

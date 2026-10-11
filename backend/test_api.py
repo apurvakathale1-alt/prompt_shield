@@ -1,9 +1,13 @@
+import base64
+import io
 import os
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
+from google.genai import types
+from PIL import Image
 
 from main import app
 
@@ -12,12 +16,114 @@ class ChatApiTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
+    @staticmethod
+    def png_base64():
+        output = io.BytesIO()
+        Image.new("RGB", (2, 2), color="white").save(output, format="PNG")
+        return base64.b64encode(output.getvalue()).decode("ascii")
+
     def test_health_reports_backend_status(self):
         with patch.dict(os.environ, {}, clear=True):
             response = self.client.get("/health")
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()["gemini_configured"])
+        self.assertEqual(response.json()["image_model"], "gemini-2.5-flash-image")
+
+    def test_image_cleaning_requires_server_api_key(self):
+        with patch.dict(os.environ, {}, clear=True):
+            response = self.client.post(
+                "/image/clean",
+                json={"image_base64": self.png_base64(), "mime_type": "image/png"},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("GEMINI_API_KEY", response.json()["detail"])
+
+    def test_image_cleaning_rejects_mismatched_mime_type(self):
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            response = self.client.post(
+                "/image/clean",
+                json={"image_base64": self.png_base64(), "mime_type": "image/jpeg"},
+            )
+
+        self.assertEqual(response.status_code, 422)
+
+    def test_image_cleaning_rejects_invalid_base64(self):
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            with patch("main.genai.Client") as provider:
+                response = self.client.post(
+                    "/image/clean",
+                    json={"image_base64": "not base64", "mime_type": "image/png"},
+                )
+
+        self.assertEqual(response.status_code, 422)
+        provider.assert_not_called()
+
+    def test_image_cleaning_returns_original_when_no_additions_are_found(self):
+        generate_content = MagicMock(
+            return_value=SimpleNamespace(text='{"findings": []}')
+        )
+        fake_client = SimpleNamespace(
+            models=SimpleNamespace(generate_content=generate_content),
+            close=MagicMock(),
+        )
+        image_base64 = self.png_base64()
+
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            with patch("main.genai.Client", return_value=fake_client):
+                response = self.client.post(
+                    "/image/clean",
+                    json={"image_base64": image_base64, "mime_type": "image/png"},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["image_base64"], image_base64)
+        self.assertEqual(response.json()["findings"], [])
+        self.assertIn("unchanged", response.json()["message"])
+        self.assertEqual(generate_content.call_count, 1)
+        fake_client.close.assert_called_once()
+
+    def test_image_cleaning_removes_reported_additions(self):
+        clean_png = io.BytesIO()
+        Image.new("RGB", (2, 2), color="green").save(clean_png, format="PNG")
+        clean_bytes = clean_png.getvalue()
+        analysis = SimpleNamespace(
+            text='{"findings":[{"item":"Added instruction text","reason":"It is a digitally inserted prompt."}]}'
+        )
+        image_part = types.Part.from_bytes(data=clean_bytes, mime_type="image/png")
+        edited = SimpleNamespace(
+            candidates=[
+                SimpleNamespace(
+                    content=SimpleNamespace(parts=[image_part]),
+                )
+            ]
+        )
+        generate_content = MagicMock(side_effect=[analysis, edited])
+        fake_client = SimpleNamespace(
+            models=SimpleNamespace(generate_content=generate_content),
+            close=MagicMock(),
+        )
+
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            with patch("main.genai.Client", return_value=fake_client):
+                response = self.client.post(
+                    "/image/clean",
+                    json={
+                        "image_base64": self.png_base64(),
+                        "mime_type": "image/png",
+                    },
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["image_base64"],
+            base64.b64encode(clean_bytes).decode("ascii"),
+        )
+        self.assertEqual(response.json()["findings"][0]["item"], "Added instruction text")
+        edit_prompt = generate_content.call_args_list[1].kwargs["contents"][1]
+        self.assertIn("Added instruction text", edit_prompt)
+        fake_client.close.assert_called_once()
 
     def test_local_vite_origin_is_allowed_by_cors(self):
         for origin in (

@@ -4,6 +4,7 @@ import DatasetExplorer from "./components/DatasetExplorer";
 
 const PDFUploader = lazy(() => import("./components/PDFUploader"));
 const Chatbot = lazy(() => import("./components/Chatbot"));
+const ImageCleaner = lazy(() => import("./components/ImageCleaner"));
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -26,6 +27,7 @@ function App() {
     "Testing Lab",
     "Dataset Explorer",
     "PDF Upload",
+    "Image Cleaner",
     "Policy Simulator",
     "Attack Replay",
     "Reports",
@@ -334,6 +336,8 @@ function App() {
                   ? "▤"
                   : item === "PDF Upload"
                   ? "📄"
+                  : item === "Image Cleaner"
+                  ? "🖼️"
                   : item === "AI Chat"
                   ? "💬"
                   : item === "Policy Simulator"
@@ -631,10 +635,17 @@ function App() {
           </Suspense>
         )}
 
+        {activePage === "Image Cleaner" && (
+          <Suspense fallback={<div className="panel">Loading image cleaner...</div>}>
+            <ImageCleaner />
+          </Suspense>
+        )}
+
         {activePage !== "Dashboard" &&
           activePage !== "Dataset Explorer" &&
           activePage !== "PDF Upload" &&
-          activePage !== "AI Chat" && (
+          activePage !== "AI Chat" &&
+          activePage !== "Image Cleaner" && (
           <section className="panel page-placeholder">
             <div className="placeholder-icon">◈</div>
             <h2>{activePage}</h2>
