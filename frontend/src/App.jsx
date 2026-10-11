@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import "./App.css";
 import DatasetExplorer from "./components/DatasetExplorer";
+
+const PDFUploader = lazy(() => import("./components/PDFUploader"));
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -21,6 +23,7 @@ function App() {
     "Dashboard",
     "Testing Lab",
     "Dataset Explorer",
+    "PDF Upload",
     "Policy Simulator",
     "Attack Replay",
     "Reports",
@@ -327,6 +330,8 @@ function App() {
                   ? "⌘"
                   : item === "Dataset Explorer"
                   ? "▤"
+                  : item === "PDF Upload"
+                  ? "📄"
                   : item === "Policy Simulator"
                   ? "⛨"
                   : item === "Attack Replay"
@@ -610,13 +615,21 @@ function App() {
           <DatasetExplorer onRunTest={analyzePrompt} />
         )}
 
-        {activePage !== "Dashboard" && activePage !== "Dataset Explorer" && (
+        {activePage === "PDF Upload" && (
+          <Suspense fallback={<div className="panel">Loading PDF uploader...</div>}>
+            <PDFUploader onAnalyze={analyzePrompt} />
+          </Suspense>
+        )}
+
+        {activePage !== "Dashboard" &&
+          activePage !== "Dataset Explorer" &&
+          activePage !== "PDF Upload" && (
           <section className="panel page-placeholder">
             <div className="placeholder-icon">◈</div>
             <h2>{activePage}</h2>
             <p>This module will be implemented in the next development steps.</p>
           </section>
-        )}
+          )}
 
         <footer className="footer">
           <span>PromptShield · AI Prompt Injection Defense</span>
