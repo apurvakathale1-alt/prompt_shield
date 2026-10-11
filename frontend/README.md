@@ -38,6 +38,12 @@ backend allows the published GitHub Pages origin and local Vite development
 origins on ports 5173, 4173, and 5175 by default. On Render's free plan, the
 service may take a short time to wake after inactivity.
 
+In AI Chat, use **Attach PDF** to ask questions about a PDF. Text is extracted
+in the browser; the PDF must be 10 MB or less, contain at most 50 pages, and
+extract to at most 40,000 characters. Scanned/image-only PDFs are not supported.
+The extracted text is screened for prompt injection and personal information
+is redacted by the backend before any content is sent to Gemini.
+
 ### Run the backend locally on Windows
 
 From PowerShell, run:

@@ -1333,6 +1333,13 @@ textarea::placeholder {
   align-self: flex-start;
 }
 
+.chat-message-attachment {
+  margin-top: 0.6rem;
+  color: #a0a0b0;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
 .message-header {
   display: flex;
   gap: 0.5rem;
@@ -1409,13 +1416,97 @@ textarea::placeholder {
 
 .chat-input-area {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid #1a1a25;
   background: #08080f;
 }
 
-.chat-input-area input {
+.chat-attachment-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.chat-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+.chat-upload-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.85rem;
+  background: #1a1a25;
+  border: 1px solid #2a2a3a;
+  border-radius: 8px;
+  color: #c0c0d0;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.chat-upload-button:hover {
+  border-color: #7c3aed;
+  color: #fff;
+}
+
+.chat-upload-button:focus-within {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.chat-pdf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(100%, 360px);
+  padding: 0.4rem 0.6rem;
+  background: #1a1a25;
+  border: 1px solid #2a2a3a;
+  border-radius: 999px;
+  color: #c0c0d0;
+  font-size: 0.75rem;
+}
+
+.chat-pdf-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-pdf-chip button {
+  padding: 0 0.25rem;
+  background: transparent;
+  border: 0;
+  color: #a0a0b0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.chat-pdf-chip button:hover {
+  color: #ef4444;
+}
+
+.chat-pdf-error {
+  width: 100%;
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.chat-input-area > input {
   flex: 1;
   min-width: 0;
   background: #0a0a12;
@@ -1428,7 +1519,7 @@ textarea::placeholder {
   outline: none;
 }
 
-.chat-input-area input:focus {
+.chat-input-area > input:focus {
   border-color: #7c3aed;
 }
 
@@ -1448,6 +1539,10 @@ textarea::placeholder {
   cursor: not-allowed;
 }
 
+.chat-input-area > button[type="submit"] {
+  align-self: flex-end;
+}
+
 @media (max-width: 768px) {
   .chatbot-container {
     height: calc(100vh - 150px);
@@ -1464,6 +1559,7 @@ textarea::placeholder {
 
   .chat-input-area {
     padding: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .chat-input-area button {
