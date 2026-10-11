@@ -68,7 +68,7 @@ def health():
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+def chat(request: ChatRequest):
     message = request.message.strip()
     if not message:
         raise HTTPException(status_code=422, detail="Message cannot be empty.")
@@ -93,7 +93,7 @@ async def chat(request: ChatRequest):
 
     try:
         client = genai.Client(api_key=api_key)
-        result = await client.aio.models.generate_content(
+        result = client.models.generate_content(
             model=MODEL_NAME,
             contents=analysis["clean"],
         )
@@ -130,6 +130,9 @@ async def chat(request: ChatRequest):
             status_code=502,
             detail=detail,
         ) from error
+    finally:
+        if "client" in locals():
+            client.close()
 
     if not result.text:
         raise HTTPException(

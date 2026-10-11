@@ -1,7 +1,7 @@
 import os
 import unittest
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -64,14 +64,15 @@ class ChatApiTests(unittest.TestCase):
     def test_provider_permission_error_has_safe_diagnostic(self):
         from google.genai.errors import APIError
 
-        generate_content = AsyncMock(
+        generate_content = MagicMock(
             side_effect=APIError(
                 403,
                 {"error": {"status": "PERMISSION_DENIED", "message": "forbidden"}},
             )
         )
         fake_client = SimpleNamespace(
-            aio=SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+            models=SimpleNamespace(generate_content=generate_content),
+            close=MagicMock(),
         )
 
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
@@ -87,14 +88,15 @@ class ChatApiTests(unittest.TestCase):
     def test_provider_unavailable_error_suggests_retry(self):
         from google.genai.errors import APIError
 
-        generate_content = AsyncMock(
+        generate_content = MagicMock(
             side_effect=APIError(
                 503,
                 {"error": {"status": "UNAVAILABLE", "message": "busy"}},
             )
         )
         fake_client = SimpleNamespace(
-            aio=SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+            models=SimpleNamespace(generate_content=generate_content),
+            close=MagicMock(),
         )
 
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
@@ -108,11 +110,12 @@ class ChatApiTests(unittest.TestCase):
         self.assertNotIn("busy", response.json()["detail"].lower().replace("temporarily busy", ""))
 
     def test_personal_information_is_redacted_before_provider_call(self):
-        generate_content = AsyncMock(
+        generate_content = MagicMock(
             return_value=SimpleNamespace(text="Solar panels convert sunlight.")
         )
         fake_client = SimpleNamespace(
-            aio=SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+            models=SimpleNamespace(generate_content=generate_content),
+            close=MagicMock(),
         )
         message = "Explain solar panels. Contact me at apurva@example.com"
 
@@ -124,9 +127,10 @@ class ChatApiTests(unittest.TestCase):
         self.assertTrue(response.json()["allowed"])
         self.assertTrue(response.json()["sanitized"])
         self.assertEqual(response.json()["response"], "Solar panels convert sunlight.")
-        sent_prompt = generate_content.await_args.kwargs["contents"]
+        sent_prompt = generate_content.call_args.kwargs["contents"]
         self.assertIn("[EMAIL_REDACTED]", sent_prompt)
         self.assertNotIn("apurva@example.com", sent_prompt)
+        fake_client.close.assert_called_once()
 
 
 if __name__ == "__main__":
