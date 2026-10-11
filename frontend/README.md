@@ -52,7 +52,8 @@ notepad .env
 ```
 
 In `.env`, replace the `GEMINI_API_KEY` example value with the key from Google
-AI Studio, save the file, and keep the backend terminal running. Then open
+AI Studio, keep `GEMINI_MODEL=gemini-3.8-flash`, save the file, and keep the
+backend terminal running. Then open
 `http://localhost:8000/health`; `gemini_configured` should be `true`. The
 `.env` file is ignored by Git. If the frontend is running on `localhost:5175`,
 that origin is already included in the local and Render CORS configuration.

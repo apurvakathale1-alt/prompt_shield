@@ -1,4 +1,5 @@
 import os
+import logging
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,8 @@ from pydantic import BaseModel, Field
 
 from security import analyze_prompt
 
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -26,7 +29,7 @@ ALLOWED_ORIGINS = [
     for origin in os.getenv("ALLOWED_ORIGINS", ",".join(DEFAULT_ORIGINS)).split(",")
     if origin.strip()
 ]
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
 app = FastAPI(title="PromptShield API", version="1.0.0")
 app.add_middleware(
@@ -94,9 +97,35 @@ async def chat(request: ChatRequest):
             contents=analysis["clean"],
         )
     except APIError as error:
+        provider_status = getattr(error, "status", None) or "UNKNOWN"
+        provider_code = getattr(error, "code", None)
+        logger.error(
+            "Gemini request failed (http_code=%s, status=%s)",
+            provider_code,
+            provider_status,
+        )
+        if provider_code == 401 or provider_status == "UNAUTHENTICATED":
+            detail = "Gemini rejected the API key. Check GEMINI_API_KEY in backend/.env."
+        elif provider_code == 403 or provider_status == "PERMISSION_DENIED":
+            detail = (
+                "Gemini denied access. Check the API key's project, API restrictions, "
+                "and Generative Language API access."
+            )
+        elif provider_code == 429 or provider_status == "RESOURCE_EXHAUSTED":
+            detail = "Gemini quota or rate limit reached. Check the project's quota and billing."
+        elif provider_code == 400:
+            detail = (
+                "Gemini rejected the request. Check the configured model and API key "
+                "permissions."
+            )
+        else:
+            detail = (
+                f"Gemini request failed (HTTP {provider_code}, {provider_status}). "
+                "Check the backend terminal for the error code."
+            )
         raise HTTPException(
             status_code=502,
-            detail="The AI provider could not complete this request. Please try again.",
+            detail=detail,
         ) from error
 
     if not result.text:
