@@ -86,3 +86,29 @@ was found, not that the destination is guaranteed safe. Links flagged in chat
 are blocked before they reach Gemini, and risky links returned by Gemini are
 withheld. Checked links can only be opened by clicking their explicit open
 link; the app never opens them automatically.
+
+Use **Policy Simulator** to paste an app agreement and locally scan for
+potentially important clauses about personal data, permissions, recurring
+payments, cancellation, content licenses, disputes, policy changes, and
+liability, offer secrecy, legal remedies, and advance prize-claim fees. Results
+show **BLOCK** for configured strong warning signs, **REVIEW** for other
+important clauses, and **ALLOW** when no configured indicators are found. The
+scan runs in your browser and does not determine whether an agreement is
+fraudulent or legally enforceable; **ALLOW is not a guarantee of safety**.
+Its “I agree” and “I decline” controls only simulate possible trade-offs; they
+do not accept or send anything and cannot block another app's consent screen.
+
+**Attack Replay** shows the actual prompt checks from the current browser
+session in a searchable, filterable timeline with timestamps, outcomes, matched
+rules, and source context. **Reports** summarizes those same events and exports
+CSV; its PDF button opens the browser print dialog so the report can be saved as
+a PDF. Session history is held in memory and clears on page reload. Exports
+include full prompt text, so treat them as potentially sensitive.
+
+**Settings** lets you enable or disable the local prompt rules, choose the
+obfuscation-detection sensitivity, and switch the dashboard between dark and
+light themes. Saved preferences are stored in this browser. The Gemini API key
+is deliberately not editable or stored in the frontend; configure the
+backend-owned key in the backend host's environment settings instead. Replay
+and report totals cover only checks made in the current page session, not
+server-wide or cross-user activity.
