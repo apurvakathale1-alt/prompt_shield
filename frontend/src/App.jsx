@@ -157,7 +157,7 @@ function App() {
     // De-spaced version (i g n o r e → ignore)
     const despaced = t.replace(/\s+/g, "");
 
-    // [at] [dot] बदल
+    // Replace [at] and [dot] obfuscation.
     t = t.replace(/\[at\]/g, "@").replace(/\[dot\]/g, ".");
     t = t.replace(/\s+/g, " ").trim();
 
@@ -316,7 +316,7 @@ function App() {
       sanitized = surg;
     }
 
-    // Personal info sanitize (फक्त untrusted source)
+    // Sanitize personal information only for untrusted sources.
     let personalInfo = null;
     if (src !== "user") {
       personalInfo = sanitizePersonalInfo(textToAnalyze);

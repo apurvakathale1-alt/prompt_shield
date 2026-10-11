@@ -133,7 +133,7 @@ function DatasetExplorer({ onRunTest }) {
           <div className="dataset-last-run">
             ✅ Ran: <code>{lastResult.text}</code> at {lastResult.time}
             <br />
-            <small>Dashboard मध्ये result बघा</small>
+            <small>View the result on the dashboard.</small>
           </div>
         )}
       </div>

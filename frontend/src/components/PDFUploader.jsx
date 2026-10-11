@@ -15,7 +15,7 @@ function PDFUploader({ onAnalyze }) {
     if (!selectedFile) return;
 
     if (selectedFile.type !== "application/pdf") {
-      setError("फक्त PDF files allowed आहेत");
+      setError("Only PDF files are allowed.");
       return;
     }
 
@@ -55,7 +55,7 @@ function PDFUploader({ onAnalyze }) {
         onAnalyze("PDF uploaded: " + selectedFile.name, "document");
       }
     } catch (err) {
-      setError("PDF वाचता आली नाही: " + err.message);
+      setError("Could not read the PDF: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ function PDFUploader({ onAnalyze }) {
       removedItems.push({
         type: "API Key",
         value: m[0],
-        reason: "Secret API key — चोरीला जाऊ शकते",
+        reason: "Secret API key — could be stolen",
         context: getContext(text, m[0]),
       });
     }
@@ -143,47 +143,47 @@ function PDFUploader({ onAnalyze }) {
       {
         pattern: /ignore\s+all\s+prior\s+rules/gi,
         type: "Instruction Override",
-        reason: "AI ला फसवण्याचा प्रयत्न — नियम विसरावेत",
+        reason: "Attempt to trick the AI into ignoring its rules",
       },
       {
         pattern: /system\s+override[^.]*/gi,
         type: "System Override",
-        reason: "AI च्या system instructions बदलण्याचा प्रयत्न",
+        reason: "Attempt to change the AI's system instructions",
       },
       {
         pattern: /ignore\s+(all\s+)?(previous\s+)?instructions[^.]*/gi,
         type: "Instruction Override",
-        reason: "आधीच्या सूचना विसराव्यात अशी फसवणूक",
+        reason: "Attempt to make the AI ignore previous instructions",
       },
       {
         pattern: /print\s+secret\s+keys?/gi,
         type: "Data Leak",
-        reason: "गुप्त keys उघड करण्याचा प्रयत्न",
+        reason: "Attempt to reveal secret keys",
       },
       {
         pattern: /send\s+.*(to\s+)?(attacker|evil|hacker)@[^\s]+/gi,
         type: "Data Exfiltration",
-        reason: "Data चोरून बाहेर पाठवण्याचा प्रयत्न",
+        reason: "Attempt to steal and send data out",
       },
       {
         pattern: /execute\s+command[^.]*/gi,
         type: "Command Injection",
-        reason: "System वर command चालवण्याचा प्रयत्न",
+        reason: "Attempt to run a command on the system",
       },
       {
         pattern: /curl\s+https?:\/\/[^\s]+/gi,
         type: "Malicious Command",
-        reason: "External server ला data पाठवण्याचा प्रयत्न",
+        reason: "Attempt to send data to an external server",
       },
       {
         pattern: /draft\s+a\s+polite\s+sick\s+leave\s+email[^.]*/gi,
         type: "Hidden Command",
-        reason: "दुसऱ्या कामासाठी AI ला भाग पाडणे",
+        reason: "Attempt to force the AI to perform a different task",
       },
       {
         pattern: /NOTE\s+TO\s+AGENT[^.]*/gi,
         type: "Indirect Injection",
-        reason: "Untrusted document मधून AI ला सूचना",
+        reason: "Instruction to the AI from an untrusted document",
       },
     ];
 
@@ -206,7 +206,7 @@ function PDFUploader({ onAnalyze }) {
       removedItems.push({
         type: "Malicious URL",
         value: m[0],
-        reason: "संशयास्पद URL — data leak",
+        reason: "Suspicious URL — possible data leak",
         context: getContext(text, m[0]),
       });
     }
@@ -342,12 +342,12 @@ function PDFUploader({ onAnalyze }) {
                       </div>
 
                       <div className="removed-row">
-                        <span className="label">❌ काढलेला text:</span>
+                        <span className="label">❌ Removed text:</span>
                         <code className="exact-text">"{item.value}"</code>
                       </div>
 
                       <div className="removed-row">
-                        <span className="label">📌 कारण:</span>
+                        <span className="label">📌 Reason:</span>
                         <span className="reason-text">{item.reason}</span>
                       </div>
 
