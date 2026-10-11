@@ -14,7 +14,7 @@ from google.genai.errors import APIError
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
 
-from security import analyze_prompt
+from security import analyze_prompt, inspect_text_links, inspect_url
 
 
 logger = logging.getLogger(__name__)
@@ -23,11 +23,15 @@ load_dotenv()
 
 DEFAULT_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:4173",
     "http://localhost:5175",
+    "http://localhost:5176",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
     "http://127.0.0.1:4173",
     "http://127.0.0.1:5175",
+    "http://127.0.0.1:5176",
     "https://apurvakathale1-alt.github.io",
 ]
 ALLOWED_ORIGINS = [
@@ -69,6 +73,19 @@ class ImageAnalysis(BaseModel):
     findings: list[ImageFinding] = Field(max_length=10)
 
 
+class LinkCheckRequest(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
+
+
+class LinkCheck(BaseModel):
+    allowed: bool
+    original_url: str
+    normalized_url: str = ""
+    host: str = ""
+    summary: str
+    reasons: list[str]
+
+
 class RemovedItem(BaseModel):
     type: str
     value: str
@@ -80,6 +97,7 @@ class ChatResponse(BaseModel):
     response: str
     reason: str = ""
     removed: list[RemovedItem] = Field(default_factory=list)
+    links: list[LinkCheck] = Field(default_factory=list)
 
 
 class ImageCleanResponse(BaseModel):
@@ -166,6 +184,11 @@ def health():
     }
 
 
+@app.post("/links/check", response_model=LinkCheck)
+def check_link(request: LinkCheckRequest):
+    return LinkCheck(**inspect_url(request.url))
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
     message = request.message.strip()
@@ -179,6 +202,8 @@ def chat(request: ChatRequest):
         for item in document_analysis["threats"]
     ]
     removed = message_analysis["removed"] + document_analysis["removed"]
+    checked_links = inspect_text_links(message + "\n" + (request.document_text or ""))
+    unsafe_links = [link for link in checked_links if not link["allowed"]]
     if threats:
         threat_names = ", ".join(item["type"] for item in threats)
         return ChatResponse(
@@ -187,6 +212,18 @@ def chat(request: ChatRequest):
             response="⛔ PromptShield blocked this message or PDF. It was not sent to AI.",
             reason=threat_names,
             removed=threats + removed,
+            links=[LinkCheck(**link) for link in checked_links],
+        )
+    if unsafe_links:
+        return ChatResponse(
+            allowed=False,
+            sanitized=False,
+            response=(
+                "⛔ PromptShield blocked this message because it contains a risky "
+                "or unsupported link. It was not sent to AI."
+            ),
+            reason="One or more URLs have URL-level warning signs.",
+            links=[LinkCheck(**link) for link in checked_links],
         )
 
     api_key = os.getenv("GEMINI_API_KEY")
@@ -259,12 +296,30 @@ def chat(request: ChatRequest):
             detail="The AI provider returned an empty response. Please try again.",
         )
 
+    response_links = inspect_text_links(result.text)
+    if any(not link["allowed"] for link in response_links):
+        return ChatResponse(
+            allowed=False,
+            sanitized=False,
+            response=(
+                "⛔ PromptShield withheld an AI reply that contained a risky "
+                "or unsupported link."
+            ),
+            reason="The AI response contained a URL with URL-level warning signs.",
+            links=[LinkCheck(**link) for link in response_links],
+        )
+
+    links_by_url = {link["original_url"].lower(): link for link in checked_links}
+    links_by_url.update(
+        {link["original_url"].lower(): link for link in response_links}
+    )
     return ChatResponse(
         allowed=True,
         sanitized=bool(removed),
         response=result.text,
         reason="Personal information was redacted before sending." if removed else "",
         removed=removed,
+        links=[LinkCheck(**link) for link in links_by_url.values()],
     )
 
 

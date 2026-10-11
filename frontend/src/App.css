@@ -1376,6 +1376,128 @@ textarea::placeholder {
   }
 }
 
+.link-checker {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.link-checker-header h2 {
+  margin-bottom: 0.4rem;
+  color: #fff;
+}
+
+.link-checker-header p,
+.link-checker-disclaimer {
+  color: #8a8a9a;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.link-checker-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.link-checker-form input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: #0a0a12;
+  border: 1px solid #2a2a3a;
+  border-radius: 8px;
+  color: #e0e0e8;
+  font: inherit;
+}
+
+.link-checker-form input:focus {
+  border-color: #7c3aed;
+  outline: none;
+}
+
+.link-checker-disclaimer {
+  max-width: 800px;
+}
+
+.link-checker-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  background: #0f0f18;
+  border: 1px solid #1f1f2e;
+  border-left: 4px solid;
+  border-radius: 12px;
+}
+
+.link-checker-result.link-allowed {
+  border-left-color: #10b981;
+}
+
+.link-checker-result.link-blocked {
+  border-left-color: #ef4444;
+}
+
+.link-checker-verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.link-checker-verdict h3 {
+  margin-bottom: 0.3rem;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.link-checker-verdict p {
+  color: #a0a0b0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.link-verdict-badge {
+  padding: 0.35rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.link-allowed .link-verdict-badge {
+  background: #103a20;
+  color: #10b981;
+}
+
+.link-blocked .link-verdict-badge {
+  background: #3a1010;
+  color: #ef4444;
+}
+
+.link-checker-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.link-checker-detail code {
+  color: #c0c0d0;
+  overflow-wrap: anywhere;
+}
+
+.link-checker-reasons {
+  padding-left: 1.25rem;
+  color: #c0c0d0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.link-open-button {
+  align-self: flex-start;
+  text-decoration: none;
+}
+
 /* AI Chat */
 .chatbot-container {
   display: flex;
@@ -1533,6 +1655,48 @@ textarea::placeholder {
 
 .message-removed code {
   word-break: break-all;
+}
+
+.chat-checked-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.chat-checked-links > strong {
+  color: #a0a0b0;
+  font-size: 0.72rem;
+}
+
+.chat-checked-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem;
+  background: #08080f;
+  border-radius: 6px;
+}
+
+.chat-checked-link code {
+  color: #c0c0d0;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.chat-checked-link a {
+  color: #a78bfa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chat-checked-link small {
+  grid-column: 1 / -1;
+  color: #8a8a9a;
+  font-size: 0.68rem;
+  line-height: 1.4;
 }
 
 .chat-loading {

@@ -56,6 +56,7 @@ function Chatbot() {
           sanitized: data.sanitized,
           reason: data.reason,
           removed: data.removed,
+          links: data.links,
         },
       ]);
     } catch (error) {
@@ -199,6 +200,32 @@ function Chatbot() {
                   <div key={`${item.type}-${itemIndex}`}>
                     <span className="removed-type">{item.type}</span>
                     <code>{item.value}</code>
+                  </div>
+                ))}
+              </div>
+            )}
+            {message.links?.length > 0 && (
+              <div className="chat-checked-links">
+                <strong>Links checked by PromptShield</strong>
+                {message.links.map((link, linkIndex) => (
+                  <div
+                    className={`chat-checked-link ${link.allowed ? "link-allowed" : "link-blocked"}`}
+                    key={`${link.original_url}-${linkIndex}`}
+                  >
+                    <span className="link-verdict-badge">
+                      {link.allowed ? "ALLOWED" : "BLOCKED"}
+                    </span>
+                    <code>{link.original_url}</code>
+                    {link.allowed && link.normalized_url && (
+                      <a
+                        href={link.normalized_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open ↗
+                      </a>
+                    )}
+                    <small>{link.reasons.join(" ")}</small>
                   </div>
                 ))}
               </div>

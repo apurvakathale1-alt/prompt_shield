@@ -30,6 +30,89 @@ class ChatApiTests(unittest.TestCase):
         self.assertFalse(response.json()["gemini_configured"])
         self.assertEqual(response.json()["image_model"], "gemini-2.5-flash-image")
 
+    def test_link_check_reports_allowed_url_without_opening_it(self):
+        response = self.client.post(
+            "/links/check",
+            json={"url": "https://example.com/about"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["allowed"])
+        self.assertEqual(response.json()["host"], "example.com")
+        self.assertIn("not opened", response.json()["summary"])
+
+    def test_link_check_blocks_birthday_gift_lure(self):
+        response = self.client.post(
+            "/links/check",
+            json={"url": "https://example.com/modi-birthday-gift"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["allowed"])
+        self.assertEqual(response.json()["normalized_url"], "")
+
+    def test_chat_blocks_risky_link_before_calling_provider(self):
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            with patch("main.genai.Client") as provider:
+                response = self.client.post(
+                    "/chat",
+                    json={
+                        "message": "I got this: https://example.com/modi-birthday-gift",
+                    },
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["allowed"])
+        self.assertFalse(response.json()["links"][0]["allowed"])
+        provider.assert_not_called()
+
+    def test_chat_allows_safe_url_and_reports_checked_link(self):
+        generate_content = MagicMock(
+            return_value=SimpleNamespace(text="This is the example site.")
+        )
+        fake_client = SimpleNamespace(
+            models=SimpleNamespace(generate_content=generate_content),
+            close=MagicMock(),
+        )
+
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            with patch("main.genai.Client", return_value=fake_client):
+                response = self.client.post(
+                    "/chat",
+                    json={"message": "What is https://example.com/about?"},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["allowed"])
+        self.assertTrue(response.json()["links"][0]["allowed"])
+        self.assertEqual(
+            response.json()["links"][0]["normalized_url"],
+            "https://example.com/about",
+        )
+
+    def test_chat_withholds_ai_response_containing_risky_link(self):
+        generate_content = MagicMock(
+            return_value=SimpleNamespace(
+                text="Claim your reward at https://example.com/modi-birthday-gift"
+            )
+        )
+        fake_client = SimpleNamespace(
+            models=SimpleNamespace(generate_content=generate_content),
+            close=MagicMock(),
+        )
+
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
+            with patch("main.genai.Client", return_value=fake_client):
+                response = self.client.post(
+                    "/chat",
+                    json={"message": "Tell me about birthday gifts"},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["allowed"])
+        self.assertNotIn("Claim your reward", response.json()["response"])
+        self.assertFalse(response.json()["links"][0]["allowed"])
+
     def test_image_cleaning_requires_server_api_key(self):
         with patch.dict(os.environ, {}, clear=True):
             response = self.client.post(
@@ -128,8 +211,12 @@ class ChatApiTests(unittest.TestCase):
     def test_local_vite_origin_is_allowed_by_cors(self):
         for origin in (
             "http://127.0.0.1:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174",
             "http://localhost:5175",
             "http://127.0.0.1:5175",
+            "http://localhost:5176",
+            "http://127.0.0.1:5176",
         ):
             with self.subTest(origin=origin):
                 response = self.client.options(

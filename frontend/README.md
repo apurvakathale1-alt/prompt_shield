@@ -35,7 +35,7 @@ The Pages build uses `https://promptshield-api.onrender.com` by default. If
 Render assigns a different URL, set the GitHub Actions repository variable
 `VITE_CHAT_API_URL` to that backend URL and redeploy the Pages workflow. The
 backend allows the published GitHub Pages origin and local Vite development
-origins on ports 5173, 4173, and 5175 by default. On Render's free plan, the
+origins on ports 5173, 5174, 4173, 5175, and 5176 by default. On Render's free plan, the
 service may take a short time to wake after inactivity.
 
 In AI Chat, use **Attach PDF** to ask questions about a PDF. Text is extracted
@@ -77,3 +77,12 @@ backend terminal running. Then open
 that origin is already included in the local and Render CORS configuration.
 For Image Cleaner, the backend also needs a Gemini image-editing model enabled
 for the key; `.env.example` uses `GEMINI_IMAGE_MODEL=gemini-2.5-flash-image`.
+
+Use **Link Checker** to review a URL before opening it. PromptShield checks
+HTTPS, host formatting, shorteners, local addresses, and common lure wording;
+it does not visit pages, follow redirects, inspect downloads, or query a live
+reputation database. An allowed result means no configured URL-level warning
+was found, not that the destination is guaranteed safe. Links flagged in chat
+are blocked before they reach Gemini, and risky links returned by Gemini are
+withheld. Checked links can only be opened by clicking their explicit open
+link; the app never opens them automatically.
