@@ -79,13 +79,14 @@ For Image Cleaner, the backend also needs a Gemini image-editing model enabled
 for the key; `.env.example` uses `GEMINI_IMAGE_MODEL=gemini-2.5-flash-image`.
 
 Use **Link Checker** to review a URL before opening it. PromptShield checks
-HTTPS, host formatting, shorteners, local addresses, and common lure wording;
-it does not visit pages, follow redirects, inspect downloads, or query a live
-reputation database. An allowed result means no configured URL-level warning
-was found, not that the destination is guaranteed safe. Links flagged in chat
-are blocked before they reach Gemini, and risky links returned by Gemini are
-withheld. Checked links can only be opened by clicking their explicit open
-link; the app never opens them automatically.
+HTTPS, host formatting, shorteners, local addresses, and common lure wording
+locally in the browser, so it does not require the backend. It does not visit
+pages, follow redirects, inspect downloads, or query a live reputation database.
+An allowed result means no configured URL-level warning was found, not that the
+destination is guaranteed safe. Links flagged in chat are blocked before they
+reach Gemini, and risky links returned by Gemini are withheld. Checked links
+can only be opened by clicking their explicit open link; the app never opens
+them automatically.
 
 Use **Policy Simulator** to paste an app agreement and locally scan for
 potentially important clauses about personal data, permissions, recurring

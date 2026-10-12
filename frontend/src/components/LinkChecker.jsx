@@ -1,51 +1,21 @@
 import { useState } from "react";
-
-const API_BASE_URL =
-  import.meta.env.VITE_CHAT_API_URL ||
-  (import.meta.env.DEV
-    ? "http://localhost:8000"
-    : "https://promptshield-api.onrender.com");
+import { inspectUrl } from "../utils/inspectUrl";
 
 function LinkChecker() {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const checkLink = async (event) => {
+  const checkLink = (event) => {
     event.preventDefault();
-    if (!url.trim() || loading) return;
+    if (!url.trim()) return;
 
-    setLoading(true);
     setError("");
     setResult(null);
     try {
-      const response = await fetch(
-        `${API_BASE_URL.replace(/\/+$/, "")}/links/check`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: url.trim() }),
-        },
-      );
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error("The link checker returned an unreadable response.");
-      }
-      if (!response.ok) {
-        throw new Error(data.detail || "Could not check this link.");
-      }
-      setResult(data);
+      setResult(inspectUrl(url));
     } catch (requestError) {
-      setError(
-        requestError instanceof TypeError
-          ? `Cannot reach the link checker at ${API_BASE_URL}. Check that the backend is running.`
-          : requestError.message || "Could not check this link.",
-      );
-    } finally {
-      setLoading(false);
+      setError(requestError.message || "Could not check this link.");
     }
   };
 
@@ -71,15 +41,15 @@ function LinkChecker() {
           maxLength={2048}
           autoComplete="url"
           placeholder="https://example.com"
-          disabled={loading}
         />
-        <button className="primary-button" type="submit" disabled={loading || !url.trim()}>
-          {loading ? "Checking..." : "Check link"}
+        <button className="primary-button" type="submit" disabled={!url.trim()}>
+          Check link
         </button>
         <p className="link-checker-disclaimer">
-          This checks the URL structure and common lure patterns only. It does
-          not visit the website or verify page contents, reputation, redirects,
-          or downloads. “Allowed” is not a guarantee that a site is safe.
+          This runs in your browser and checks the URL for common warning signs.
+          It does not visit the website or verify page contents, reputation,
+          redirects, or downloads. “Allowed” is not a guarantee that a site is
+          safe.
         </p>
         {error && <p className="pdf-error" role="alert">{error}</p>}
       </form>
