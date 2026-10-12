@@ -30,7 +30,7 @@ const PROMPT_RULES = [
     id: "R-001",
     name: "Instruction Override",
     patterns: [
-      /ignore\s*(all\s*)?(previous\s*)?(prior\s*)?instructions?/i,
+      /ignore\s*(all\s*)?((previous|prior)\s*)?(instructions?|rules)/i,
       /ignore\s*(all\s*)?(prior\s*)?rules/i,
       /forget\s*(your\s*)?(rules|instructions)/i,
       /disregard\s*(the\s*)?(system|previous)/i,
@@ -235,10 +235,10 @@ function App() {
   // ⬇️ Surgical Sanitization
   function surgicalSanitize(text) {
     const injectionPatterns = [
-      /system\s+override[^.]*/gi,
-      /ignore\s+(all\s+)?(previous\s+)?instructions[^.]*/gi,
+      /s\s*y\s*s\s*t\s*e\s*m\s+o\s*v\s*e\s*r\s*r\s*i\s*d\s*e/gi,
+      /i\s*g\s*n\s*o\s*r\s*e\s+(?:a\s*l\s*l\s+)?(?:(?:p\s*r\s*e\s*v\s*i\s*o\s*u\s*s|p\s*r\s*i\s*o\s*r)\s+)?(?:i\s*n\s*s*t\s*r\s*u\s*c\s*t\s*i\s*o\s*n\s*s?|r\s*u\s*l\s*e\s*s?)/gi,
       /print\s+secret\s+keys?/gi,
-      /reveal\s+(the\s+)?system\s+prompt[^.]*/gi,
+      /reveal\s+(the\s+)?system\s+prompt/gi,
     ];
 
     let clean = text;
@@ -274,7 +274,7 @@ function App() {
     // Check for mixed-content injections before applying the blocking rules.
     const surg = surgicalSanitize(textToAnalyze);
     const hasInjection = surg.removed.length > 0;
-    const hasLegitimateContent = surg.clean.trim().length > 20;
+    const hasLegitimateContent = surg.clean.trim().length > 0;
 
     let matchedRule = null;
 

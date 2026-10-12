@@ -30,10 +30,16 @@ GIFT_LURE_TERMS = {
 }
 
 
+def _spaced_word(word: str) -> str:
+    return r"\s*".join(re.escape(character) for character in word)
+
+
 INJECTION_RULES = (
     (
         re.compile(
-            r"ignore\s+(?:all\s+)?(?:previous|prior)\s+(?:instructions?|rules)",
+            rf"{_spaced_word('ignore')}\s+(?:{_spaced_word('all')}\s+)?"
+            rf"(?:{_spaced_word('previous')}|{_spaced_word('prior')})\s+"
+            rf"(?:{_spaced_word('instruction')}\s*s?|{_spaced_word('rules')})",
             re.IGNORECASE,
         ),
         "Instruction Override",
@@ -80,6 +86,21 @@ PERSONAL_INFO_RULES = (
     (re.compile(r"\b\d{4}\s?\d{4}\s?\d{4}\b"), "Aadhaar", "[AADHAAR_REDACTED]"),
     (re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b"), "PAN", "[PAN_REDACTED]"),
 )
+
+
+def remove_detected_threats(text: str, threats: list[dict]) -> str:
+    clean = text
+    obfuscated_instruction = False
+    for threat in threats:
+        clean = clean.replace(threat["value"], " ", 1)
+        obfuscated_instruction = obfuscated_instruction or bool(
+            re.search(r"(?:[a-z]\s){2,}[a-z]", threat["value"], re.IGNORECASE)
+        )
+    if obfuscated_instruction:
+        clean = re.sub(r"(?<=[a-z]) (?=[a-z])", "", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"\s{2,}", " ", clean)
+    clean = re.sub(r"^\s*(?:(?:and|but|then|also)\b[\s,:;-]*)+", "", clean, flags=re.IGNORECASE)
+    return clean.strip(" \t\r\n,;:-.!?")
 
 
 def inspect_url(value: str) -> dict:
