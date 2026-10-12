@@ -23,6 +23,7 @@ GIFT_LURE_TERMS = {
     "congratulations",
     "free",
     "gift",
+    "offer",
     "prize",
     "reward",
     "winner",
@@ -166,7 +167,7 @@ def inspect_url(value: str) -> dict:
             }
             if len(lure_terms) >= 2:
                 reasons.append(
-                    "The URL combines prize, gift, or claim language commonly used in lures."
+                    "The URL combines free-offer, prize, gift, or claim language commonly used in lures."
                 )
             if re.search(
                 r"\b(?:verify|login|sign[\s-]?in|password|account)\b",

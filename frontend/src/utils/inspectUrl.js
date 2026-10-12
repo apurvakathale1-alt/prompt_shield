@@ -14,6 +14,7 @@ const GIFT_LURE_TERMS = [
   "congratulations",
   "free",
   "gift",
+  "offer",
   "prize",
   "reward",
   "winner",
@@ -115,7 +116,7 @@ export function inspectUrl(value) {
       );
       if (new Set(lureTerms).size >= 2) {
         reasons.push(
-          "The URL combines prize, gift, or claim language commonly used in lures.",
+          "The URL combines free-offer, prize, gift, or claim language commonly used in lures.",
         );
       }
       if (

@@ -51,6 +51,13 @@ class InspectUrlTests(unittest.TestCase):
         self.assertIn("commonly used in lures", result["reasons"][0])
         self.assertEqual(result["normalized_url"], "")
 
+    def test_free_mobile_offer_domain_is_blocked(self):
+        result = inspect_url("https://jio-free-mobile-offer.com")
+
+        self.assertFalse(result["allowed"])
+        self.assertIn("free-offer", result["reasons"][0])
+        self.assertEqual(result["normalized_url"], "")
+
     def test_shortener_and_http_links_are_blocked(self):
         shortener_result = inspect_url("https://bit.ly/gift")
         http_result = inspect_url("http://example.com")
